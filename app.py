@@ -1,3 +1,4 @@
+from fastapi.responses import HTMLResponse
 from fastapi import FastAPI
 import hashlib
 import sqlite3
@@ -5,9 +6,10 @@ import sqlite3
 app = FastAPI()
 
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 def read_root():
-    return {"Hello": "World"}
+    return open("./frontEnd/index.html", "r").read()
+
 
 @app.get("/votes/{person}")
 def votes(person: str):
@@ -18,7 +20,9 @@ def votes(person: str):
 @app.get("/votes")
 def votes():
     db = sqlite3.connect("test.db")
-    votes = db.execute("SELECT (SELECT name FROM leaders WHERE id=leaderID), COUNT(*) FROM votes GROUP BY leaderID").fetchall()
+    # votes = db.execute("SELECT (SELECT name FROM leaders WHERE id=leaderID), COUNT(*) FROM votes GROUP BY leaderID").fetchall()
+    votes = db.execute("SELECT L.name, COUNT(V.leaderID) FROM leaders L LEFT JOIN votes V ON L.id=V.leaderID GROUP BY L.id").fetchall()
+    # return {i[0]:i[1] for i in votes}
     return dict(votes)
 
 @app.get("/leaders")
